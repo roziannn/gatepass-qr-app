@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" 
+  url      = env("DATABASE_URL")
+}
+
+model EventCategory {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  events Event[]
+}
+
+model Event {
+  id               Int       @id @default(autoincrement())
+  name             String
+  description      String?
+  date             DateTime
+  location         String
+  quota            Int
+  participantCount Int       @default(0)
+  status           EventStatus @default(PENDING)
+  categoryId       Int
+  category         EventCategory @relation(fields: [categoryId], references: [id])
+  participants     Participant[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Participant {
+  id         Int       @id @default(autoincrement())
+  fullName   String
+  email      String
+  birthDate  DateTime
+  eventId    Int
+  event      Event     @relation(fields: [eventId], references: [id])
+  status     ParticipantStatus @default(REGISTERED)
+  ticketCode String    @unique
+  scanDate   DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+enum EventStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  FINISHED
+}
+
+enum ParticipantStatus {
+  REGISTERED
+  ATTENDED
+  ABSENT
+  CANCELLED
+}

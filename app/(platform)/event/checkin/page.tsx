@@ -15,34 +15,37 @@ export default function ScanQR() {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-10 text-slate-900">
-      <h1 className="text-3xl sm:text-5xl font-extrabold mb-6">Scan QR Code</h1>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-12 text-slate-900">
+      <h1 className="text-4xl sm:text-6xl font-extrabold mb-8 text-green-900 drop-shadow-sm">Scan QR Code</h1>
 
-      <div className="w-full max-w-sm bg-white rounded-lg shadow-md p-4 flex flex-col items-center gap-4">
-        <QrReader
-          constraints={{ facingMode: "environment" }}
-          onResult={(result, error) => {
-            if (result) {
-              setResult(result.getText());
-              setError(null);
-            }
-            if (error) {
-              setError(error.message || "Unknown error");
-            }
-          }}
-          className="w-full"
-        />
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center gap-6">
+        <div className="w-full rounded-lg overflow-hidden border-2 border-green-300 shadow-inner">
+          <QrReader
+            constraints={{ facingMode: "environment" }}
+            onResult={(result, error) => {
+              if (result) {
+                setResult(result.getText());
+                setError(null);
+              }
+              if (error) {
+                setError(error.message || "Unknown error");
+              }
+            }}
+            className="w-full"
+          />
+        </div>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-2 w-full">
           {result ? (
             <>
-              <p className="text-green-600 font-semibold mb-2">QR Code detected!</p>
-              <p className="break-words">{result}</p>
+              <p className="text-green-700 font-semibold mb-3 text-lg">QR Code detected!</p>
+              <p className="break-words px-4 py-3 bg-green-50 rounded-md text-green-900 select-text shadow-sm">{result}</p>
             </>
           ) : (
-            <p className="text-slate-700">Arahkan kamera ke QR Code untuk memindai.</p>
+            <p className="text-slate-600 italic">Arahkan kamera ke QR Code untuk memindai.</p>
           )}
-          {error && <p className="text-red-600 mt-4">{error}</p>}
+
+          {error && <p className="text-red-600 mt-4 font-medium bg-red-50 rounded-md px-3 py-2 shadow-sm">{error}</p>}
         </div>
       </div>
     </main>
