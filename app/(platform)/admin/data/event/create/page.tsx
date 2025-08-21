@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 interface Category {
   id: number;
@@ -17,12 +19,11 @@ export default function CreateEventPage() {
     date: "",
     location: "",
     participants: "",
-    categoryId: "", // ganti dari status ke categoryId
+    categoryId: "",
     description: "",
     photo: null as File | null,
   });
 
-  // Ambil kategori dari API
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -35,10 +36,14 @@ export default function CreateEventPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.categoryId) return alert("Kategori wajib dipilih");
+    if (!form.categoryId) {
+      toast.warning("Kategori wajib dipilih");
+      return;
+    }
 
     try {
       const res = await fetch("/api/events", {
@@ -56,21 +61,19 @@ export default function CreateEventPage() {
 
       const data = await res.json();
 
-      if (!res.ok) return alert(data.error || "Gagal menyimpan event");
+      if (!res.ok) {
+        toast.error(data.error || "Gagal menyimpan event");
+        return;
+      }
 
-      alert(`Event berhasil dibuat: ${data.name}`);
-      setForm({
-        name: "",
-        date: "",
-        location: "",
-        participants: "",
-        categoryId: "",
-        description: "",
-        photo: null,
-      });
+      toast.success(`Event berhasil dibuat: ${data.name}`);
+
+      setTimeout(() => {
+        router.push("/admin/data/event");
+      }, 1000);
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menyimpan event");
+      toast.error("Terjadi kesalahan saat menyimpan event");
     }
   };
 
