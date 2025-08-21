@@ -1,50 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
-import { User, Eye, ArrowUpDown } from "lucide-react";
+import { Eye, ArrowUpDown, Check } from "lucide-react";
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from "@headlessui/react";
-import { Check } from "lucide-react";
+import { Participant, EventParticipant } from "../../../../../types/participant";
 
-interface Participant {
-  id: number;
-  name: string;
-  email: string;
-  registeredAt: string;
-}
-
-interface Event {
-  id: number;
-  name: string;
-  participants: Participant[];
-}
+import Header from "@/components/Header";
 
 export default function ParticipantsPage() {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [events, setEvents] = useState<EventParticipant[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<EventParticipant | null>(null);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
 
-  const events: Event[] = [
-    {
-      id: 1,
-      name: "Seminar Teknologi",
-      participants: [
-        { id: 1, name: "Rina Wijaya", email: "rina@example.com", registeredAt: "10 Agustus 2025" },
-        { id: 2, name: "Budi Santoso", email: "budi@example.com", registeredAt: "11 Agustus 2025" },
-      ],
-    },
-    {
-      id: 2,
-      name: "Workshop Desain UI",
-      participants: [{ id: 3, name: "Dewi Lestari", email: "dewi@example.com", registeredAt: "09 Agustus 2025" }],
-    },
-  ];
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const res = await fetch("/api/events");
+        const data: EventParticipant[] = await res.json();
+        setEvents(data);
+      } catch (err) {
+        console.error("Gagal fetch events:", err);
+      }
+    }
+    fetchEvents();
+  }, []);
+
+  // fetch participants saat event dipick
+  const [participants, setParticipants] = useState<Participant[]>([]);
+
+  const handleEventChange = async (event: EventParticipant) => {
+    setSelectedEvent(event);
+    setLoadingParticipants(true);
+    try {
+      const res = await fetch(`/api/events/${event.id}/participants`);
+      const data: Participant[] = await res.json();
+      setParticipants(data);
+    } catch (err) {
+      console.error("Gagal fetch participants:", err);
+      setParticipants([]);
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
 
   const columns: TableColumn<Participant>[] = [
-    { name: "Nama", selector: (row) => row.name, sortable: true, grow: 2 },
+    { name: "No Tiket", selector: (row) => row.ticketCode, sortable: true, grow: 2 },
+    { name: "Nama", selector: (row) => row.fullName, sortable: true, grow: 2 },
     { name: "Email", selector: (row) => row.email, sortable: true, grow: 2 },
-    { name: "Terdaftar Pada", selector: (row) => row.registeredAt, sortable: true, grow: 1.5 },
+    { name: "Register Date", selector: (row) => row.registeredAt, sortable: true, grow: 1.5 },
+    { name: "Status", selector: (row) => row.status, sortable: true, grow: 2 },
+    { name: "Scan Date", selector: (row) => row.scanDate, sortable: true, grow: 2 },
     {
       name: "Aksi",
-      cell: (row) => (
+      cell: () => (
         <button className="p-1 rounded hover:bg-green-50 text-green-600">
           <Eye className="w-5 h-5" />
         </button>
@@ -62,20 +71,12 @@ export default function ParticipantsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="flex items-center justify-end h-[72px] px-6 sm:px-10 border-b border-green-100 bg-white">
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-green-50 px-3 py-2 rounded-full transition-colors">
-          <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full">
-            <User className="w-6 h-6 text-green-700" />
-          </div>
-          <span className="hidden sm:inline text-green-900 font-medium">Administrator</span>
-        </div>
-      </header>
-
+      <Header />
       <main className="flex-1 p-6">
         <h1 className="text-2xl font-bold text-slate-800 mb-4">Daftar Peserta Event</h1>
 
         <div className="mb-6 max-w-xs">
-          <Listbox value={selectedEvent} onChange={setSelectedEvent}>
+          <Listbox value={selectedEvent} onChange={handleEventChange}>
             <div className="relative">
               <ListboxButton className="relative w-full cursor-pointer rounded border border-gray-300 bg-white py-2 pl-3 pr-10 text-left text-gray-700 shadow-sm">
                 <span>{selectedEvent ? selectedEvent.name : "Pilih Event"}</span>
@@ -100,9 +101,12 @@ export default function ParticipantsPage() {
           </Listbox>
         </div>
 
-        {/* Tabel peserta */}
         {selectedEvent ? (
-          <DataTable columns={columns} data={selectedEvent.participants} pagination highlightOnHover responsive striped noHeader customStyles={customStyles} />
+          loadingParticipants ? (
+            <p>Loading peserta...</p>
+          ) : (
+            <DataTable columns={columns} data={participants} pagination highlightOnHover responsive striped noHeader customStyles={customStyles} />
+          )
         ) : (
           <p className="text-gray-600">Silakan pilih event untuk melihat daftar peserta.</p>
         )}
