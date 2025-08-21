@@ -1,54 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, PlusCircle, User } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Header from "@/components/Header";
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function CreateEventPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     name: "",
     date: "",
     location: "",
     participants: "",
-    status: "Aktif",
+    categoryId: "", // ganti dari status ke categoryId
     description: "",
     photo: null as File | null,
   });
+
+  // Ambil kategori dari API
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data: Category[]) => setCategories(data))
+      .catch(console.error);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setForm((prev) => ({ ...prev, photo: e.target.files![0] }));
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    alert(`Menyimpan event:
-Nama: ${form.name}
-Tanggal: ${form.date}
-Lokasi: ${form.location}
-Peserta: ${form.participants}
-Status: ${form.status}
-Deskripsi: ${form.description}
-Foto: ${form.photo ? form.photo.name : "Tidak ada foto"}`);
+    if (!form.categoryId) return alert("Kategori wajib dipilih");
+
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          date: form.date,
+          location: form.location,
+          quota: Number(form.participants),
+          categoryId: Number(form.categoryId),
+          description: form.description,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) return alert(data.error || "Gagal menyimpan event");
+
+      alert(`Event berhasil dibuat: ${data.name}`);
+      setForm({
+        name: "",
+        date: "",
+        location: "",
+        participants: "",
+        categoryId: "",
+        description: "",
+        photo: null,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat menyimpan event");
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="flex items-center justify-end h-[72px] px-6 sm:px-10 border-b border-green-100 bg-white">
-        <div className="flex items-center gap-3 cursor-pointer hover:bg-green-50 px-3 py-2 rounded-full transition-colors">
-          <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full">
-            <User className="w-6 h-6 text-green-700" />
-          </div>
-          <span className="hidden sm:inline text-green-900 font-medium">Administrator</span>
-        </div>
-      </header>
+      <Header />
+
       <div className="my-6 px-6 sm:px-10">
         <div className="flex items-center gap-6">
           <Link href="/admin/data/event" className="flex items-center gap-2 text-green-700 hover:underline">
@@ -58,6 +87,7 @@ Foto: ${form.photo ? form.photo.name : "Tidak ada foto"}`);
           <h1 className="text-2xl font-bold text-slate-900">Tambah Event Baru</h1>
         </div>
       </div>
+
       <form onSubmit={handleSubmit} className="max-w-4xl bg-white p-6 mx-6 rounded-xl shadow border border-green-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
           {/* Nama Event */}
@@ -120,15 +150,18 @@ Foto: ${form.photo ? form.photo.name : "Tidak ada foto"}`);
             />
           </div>
 
-          {/* Status */}
+          {/* Kategori Event */}
           <div>
-            <label htmlFor="status" className="block font-semibold mb-1 text-slate-800">
-              Status
+            <label htmlFor="categoryId" className="block font-semibold mb-1 text-slate-800">
+              Kategori Event
             </label>
-            <select id="status" name="status" value={form.status} onChange={handleChange} className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 text-slate-900">
-              <option value="Aktif">Aktif</option>
-              <option value="Menunggu">Menunggu</option>
-              <option value="Batal">Batal</option>
+            <select id="categoryId" name="categoryId" value={form.categoryId} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 text-slate-900">
+              <option value="">Pilih Kategori</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

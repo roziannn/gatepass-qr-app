@@ -18,7 +18,7 @@ interface Event {
 
 export default function AdminDashboard() {
   const [filterText, setFilterText] = useState("");
-  const pathname = usePathname();
+  // const pathname = usePathname();
 
   const barChartData = [
     { month: "Jan", events: 3 },

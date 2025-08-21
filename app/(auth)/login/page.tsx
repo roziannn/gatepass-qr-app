@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Lock, Mail, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
