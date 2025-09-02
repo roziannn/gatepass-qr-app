@@ -125,9 +125,7 @@ export default function EventCategoryListPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Data Category</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* LEFT SIDE */}
           <div className="md:col-span-2">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">

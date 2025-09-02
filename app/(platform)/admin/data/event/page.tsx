@@ -157,8 +157,7 @@ export default function EventListPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Data Event</h1>
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6 mt-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex items-center bg-white rounded-md border border-gray-300 px-3 py-2 max-w-xs w-full sm:w-auto hover:border-green-500 transition">
               <Search className="w-5 h-5 text-gray-500 mr-2" />

@@ -75,8 +75,6 @@ export default function ParticipantsPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-slate-800 mb-4">Data Participants Registered</h1>
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           {/* Dropdown pilih event */}
           <div className="max-w-xs">
