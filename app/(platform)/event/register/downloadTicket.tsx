@@ -17,87 +17,92 @@ const DownloadTicket: FC<DownloadTicketProps> = ({ qrData, fullName, email, even
   const downloadETicket = async () => {
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = 700; // horizontal
-      canvas.height = 320;
+      // A4 300dpi
+      canvas.width = 2480;
+      canvas.height = 3508;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Background gradient ringan
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, "#E0F7FA");
-      gradient.addColorStop(1, "#FFFFFF");
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Header Event di pojok kiri
-      ctx.fillStyle = "#00695C";
-      ctx.font = "bold 28px sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(eventName, 20, 50);
+      // ===== Fungsi wrap text =====
+      const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+        const words = text.split(" ");
+        let line = "";
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + " ";
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && n > 0) {
+            ctx.fillText(line, x, y);
+            line = words[n] + " ";
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, x, y);
+        return y; // y akhir
+      };
 
-      // Divider horizontal putus-putus di bawah header
+      // ===== Header Event =====
+      ctx.fillStyle = "#00695C";
+      ctx.font = "bold 120px sans-serif";
+      ctx.textAlign = "center";
+      // Wrap text maksimal width 2200px, lineHeight 140
+      const headerY = 200;
+      const afterHeaderY = wrapText(ctx, eventName, canvas.width / 2, headerY, 2200, 140);
+
+      // Divider horizontal
       ctx.strokeStyle = "#004D40";
-      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 5;
+      ctx.setLineDash([30, 30]);
       ctx.beginPath();
-      ctx.moveTo(20, 70);
-      ctx.lineTo(canvas.width - 20, 70);
+      ctx.moveTo(100, afterHeaderY + 50);
+      ctx.lineTo(canvas.width - 100, afterHeaderY + 50);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // QR Code di kiri bawah header
-      const qrSize = 180;
+      // ===== QR Code Tengah =====
+      const qrSize = 1000; // cukup besar
       const qrCanvas = document.createElement("canvas");
       await QRCodeLib.toCanvas(qrCanvas, qrData, { width: qrSize });
-      ctx.drawImage(qrCanvas, 20, 90);
+      const qrX = (canvas.width - qrSize) / 2;
+      const qrY = afterHeaderY + 150;
+      ctx.drawImage(qrCanvas, qrX, qrY);
 
-      // Info peserta di kanan QR
+      // Kotak border QR
+      ctx.strokeStyle = "#004D40";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+
+      // ===== Info Peserta Bawah QR =====
       ctx.fillStyle = "#000";
-      ctx.font = "bold 18px sans-serif";
-      const textX = qrSize + 40;
-      let textY = 120;
+      ctx.font = "bold 80px sans-serif";
+      ctx.textAlign = "center";
+      let textY = qrY + qrSize + 100;
+      ctx.fillText(`Ticket ID: ${ticketCode}`, canvas.width / 2, textY);
 
-      ctx.fillText(`Ticket ID: ${ticketCode}`, textX, textY);
-      textY += 40;
-      ctx.font = "16px sans-serif";
-      ctx.fillText(`Name: ${fullName}`, textX, textY);
-      textY += 30;
-      ctx.fillText(`Email: ${email}`, textX, textY);
+      ctx.font = "60px sans-serif";
+      textY += 100;
+      ctx.fillText(`Name: ${fullName}`, canvas.width / 2, textY);
 
-      // Garis vertikal putus-putus di sisi kanan QR
-      ctx.strokeStyle = "#004D40";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      const verticalLineX = 20 + qrSize + 10; // 10px di kanan QR
-      ctx.moveTo(verticalLineX, 90); // start di atas QR
-      ctx.lineTo(verticalLineX, 90 + qrSize); // sampai bawah QR
-      ctx.stroke();
-      ctx.setLineDash([]);
+      textY += 80;
+      ctx.fillText(`Email: ${email}`, canvas.width / 2, textY);
 
-      // Garis tipis horizontal di atas footer
-      ctx.strokeStyle = "#004D40";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(20, canvas.height - 50);
-      ctx.lineTo(canvas.width - 20, canvas.height - 50);
-      ctx.stroke();
-
-      // Footer: Powered by & note
-      ctx.font = "12px sans-serif";
-      ctx.fillStyle = "#555";
-      ctx.textAlign = "left";
-      ctx.fillText("Powered by GatePass-QR-Code", 20, canvas.height - 30);
-
-      ctx.textAlign = "right";
-      ctx.fillText("Please bring this ticket to the event", canvas.width - 20, canvas.height - 30);
+      // ===== Footer =====
+      ctx.font = "40px sans-serif";
+      ctx.fillStyle = "#555555";
+      ctx.textAlign = "center";
+      ctx.fillText("Powered by GatePass-QR-Code", canvas.width / 2, canvas.height - 200);
+      ctx.fillText("Please bring this ticket to the event", canvas.width / 2, canvas.height - 120);
 
       // Download
       const link = document.createElement("a");
       const sanitizedEvent = eventName.replace(/\s+/g, "");
       const sanitizedName = fullName.replace(/\s+/g, "");
-      const sanitizedCode = ticketCode;
       link.href = canvas.toDataURL("image/png");
-      link.download = `${sanitizedEvent}-${sanitizedName}-${sanitizedCode}.png`;
+      link.download = `${sanitizedEvent}-${sanitizedName}-${ticketCode}.png`;
       link.click();
     } catch (err) {
       console.error(err);
@@ -107,24 +112,19 @@ const DownloadTicket: FC<DownloadTicketProps> = ({ qrData, fullName, email, even
 
   return (
     <div className="flex flex-col items-center gap-6 bg-white p-6 rounded-2xl shadow-lg shadow-green-200 border border-green-200 mt-6 w-full max-w-lg">
-      <h2 className="font-extrabold text-2xl text-center mb-2 text-green-700">E-Ticket Preview</h2>
-
       <div className="flex justify-center my-4">
         <QRCode value={qrData} size={180} />
       </div>
 
-      <div className="w-full flex flex-col gap-2 bg-green-50 p-4 rounded-lg border border-green-200">
-        <p className="text-sm font-semibold text-slate-600 mt-2">Participant Name</p>
-        <p className="text-base text-slate-800">{fullName}</p>
+      <div className="w-full flex flex-col gap-2 bg-green-50 p-4 rounded-lg border border-green-200 text-center">
+        <p className="text-sm font-semibold text-slate-600 mt-2">Ticket ID</p>
+        <p className="text-base font-mono bg-slate-100 px-3 py-1 rounded-lg shadow-inner">{ticketCode}</p>
 
-        <p className="text-sm font-semibold text-slate-600 mt-2">Email</p>
+        <p className="font-bold text-slate-800">{fullName}</p>
         <p className="text-base text-slate-800">{email}</p>
 
-        <p className="text-sm font-semibold text-slate-600 mt-2">Event</p>
+        <p className="text-sm font-semibold text-slate-600 mt-4">Event</p>
         <p className="text-base text-slate-800">{eventName}</p>
-
-        <p className="text-sm font-semibold text-slate-600 mt-2">Ticket ID</p>
-        <p className="text-base font-mono bg-slate-100 px-3 py-1 rounded-lg shadow-inner text-center">{JSON.parse(qrData).ticketCode}</p>
       </div>
 
       <button onClick={downloadETicket} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg w-full font-semibold transition-transform transform hover:scale-[1.02]">

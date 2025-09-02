@@ -78,10 +78,8 @@ export default function AdminSettingsPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <main className="flex-1 p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-slate-800">Admin Settings</h1>
-
         {/* General Settings */}
-        <section className="bg-slate-100 p-6 rounded-xl shadow border border-gray-300 text-slate-800 space-y-4">
+        <section className="p-6 rounded-xl shadow border border-gray-200 text-slate-800 space-y-4">
           <h2 className="text-xl font-semibold">General Settings</h2>
           <div>
             <label className="block font-medium mb-1">Site Name</label>
@@ -97,7 +95,7 @@ export default function AdminSettingsPage() {
         </section>
 
         {/* View System Logs */}
-        <section className="bg-slate-100 p-6 rounded-xl shadow border border-gray-300 text-slate-800 space-y-4">
+        <section className="p-6 rounded-xl shadow border border-gray-200 text-slate-800 space-y-4">
           <h2 className="text-xl font-semibold">View System Logs</h2>
           <p>Di sini admin bisa melihat logs aktivitas sistem (belum diimplementasi)</p>
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">View Logs</button>

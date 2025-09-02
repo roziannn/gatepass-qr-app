@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, FormInput } from "lucide-react";
-import DownloadTicket from "./downloadTicket"; // import component partial
+import Link from "next/link";
 
 interface EventOption {
   id: number;
@@ -11,15 +11,14 @@ interface EventOption {
 }
 
 export default function Register() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [selectedEventId, setSelectedEventId] = useState<number | "">("");
   const [events, setEvents] = useState<EventOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [qrData, setQrData] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -37,8 +36,6 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess(false);
-    setQrData(null);
 
     if (!fullName.trim() || !email.trim() || !birthDate.trim() || !selectedEventId) {
       setError("Semua field wajib diisi.");
@@ -52,6 +49,7 @@ export default function Register() {
     }
 
     setLoading(true);
+
     try {
       const res = await fetch("/api/participants", {
         method: "POST",
@@ -66,24 +64,29 @@ export default function Register() {
         return;
       }
 
-      setSuccess(true);
-      const qrString = JSON.stringify({
-        id: data.participant.id,
-        fullName: data.participant.fullName,
-        email: data.participant.email,
-        eventId: data.participant.eventId,
-        ticketCode: data.participant.ticketCode,
-      });
-      setQrData(qrString);
+      const eventName = events.find((ev) => ev.id === selectedEventId)?.name || "";
+
+      // Simpan participant ke sessionStorage
+      sessionStorage.setItem(
+        "participant",
+        JSON.stringify({
+          fullName,
+          email,
+          eventName,
+          ticketCode: data.participant.ticketCode,
+        })
+      );
+
+      // 3 detik sebelum redirect
+      setTimeout(() => {
+        router.push("/event/register/success");
+      }, 3000);
     } catch (err) {
       console.error(err);
       setError("Terjadi kesalahan saat mendaftar");
-    } finally {
       setLoading(false);
     }
   };
-
-  const selectedEventName = events.find((ev) => ev.id === selectedEventId)?.name || "";
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-10 text-slate-900">
@@ -96,7 +99,6 @@ export default function Register() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 bg-white p-8 rounded-2xl shadow-lg shadow-green-200 border border-green-200">
-          {/* Nama Lengkap */}
           <div className="flex flex-col">
             <label htmlFor="fullName" className="font-semibold text-slate-700 text-base">
               Nama Lengkap
@@ -112,7 +114,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Email */}
           <div className="flex flex-col">
             <label htmlFor="email" className="font-semibold text-slate-700 text-base">
               Email
@@ -128,7 +129,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Tanggal Lahir */}
           <div className="flex flex-col">
             <label htmlFor="birthDate" className="font-semibold text-slate-700 text-base">
               Tanggal Lahir
@@ -143,7 +143,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Pilih Event */}
           <div className="flex flex-col">
             <label htmlFor="event" className="font-semibold text-slate-700 text-base">
               Pilih Event
@@ -164,20 +163,17 @@ export default function Register() {
             </select>
           </div>
 
-          {/* Tombol Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || events.length === 0}
             className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
           >
             <FormInput className="w-6 h-6" />
             {loading ? "Mendaftar..." : "Daftar Sekarang"}
           </button>
+
+          {error && <p className="text-red-600 font-semibold text-center text-lg">{error}</p>}
         </form>
-
-        {error && <p className="text-red-600 font-semibold text-center text-lg">{error}</p>}
-
-        {success && qrData && <DownloadTicket qrData={qrData} fullName={fullName} email={email} eventName={selectedEventName} ticketCode={JSON.parse(qrData).ticketCode} />}
       </div>
     </main>
   );

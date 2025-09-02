@@ -80,7 +80,7 @@ export default function EventListPage() {
       selector: (row) => row.location,
       sortable: true,
       wrap: true,
-      grow: 3,
+      grow: 2,
       minWidth: "180px",
     },
     {
@@ -149,8 +149,29 @@ export default function EventListPage() {
   }, [filterText, selectedCategory, selectedStatus, events]);
 
   const customStyles = {
-    headCells: { style: { fontWeight: "bold", fontSize: "16px" } },
-    rows: { style: { fontSize: "15px" } },
+    headCells: {
+      style: {
+        fontWeight: "bold",
+        fontSize: "16px",
+        paddingLeft: "16px",
+        paddingRight: "16px",
+      },
+    },
+    rows: {
+      style: {
+        fontSize: "15px",
+        paddingTop: "12px",
+        paddingBottom: "12px",
+        paddingLeft: "16px",
+        paddingRight: "16px",
+      },
+    },
+    cells: {
+      style: {
+        paddingLeft: "16px",
+        paddingRight: "16px",
+      },
+    },
   };
 
   return (

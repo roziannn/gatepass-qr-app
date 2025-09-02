@@ -14,7 +14,8 @@ export default function Sidebar() {
     { name: "Data Event", icon: Calendar, href: "/admin/data/event" },
     { name: "Data Category", icon: ListTodo, href: "/admin/data/category" },
     { name: "Data Participants", icon: Users, href: "/admin/data/participants" },
-    { name: "Scan QR", icon: QrCode, href: "/event/checkin" },
+    { name: "Scanner", icon: QrCode, href: "/admin/scanner" },
+    // { name: "Scan QR", icon: QrCode, href: "/event/checkin" },
     { name: "Settings", icon: Settings, href: "/admin/settings" },
   ];
 
