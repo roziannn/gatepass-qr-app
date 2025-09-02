@@ -26,7 +26,7 @@ export default function Sidebar() {
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-green-50 text-green-700 transition-colors">
           <MenuIcon className="w-5 h-5" />
         </button>
-        {sidebarOpen && <span className="text-lg font-bold text-green-800 tracking-wide">GATEPASS</span>}
+        {sidebarOpen && <span className="text-xl font-semibold text-green-800 tracking-wide">GATEPASS</span>}
       </div>
 
       {/* Menu */}
@@ -43,43 +43,6 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-
-      {/* User Info + Logout Dropdown */}
-      {/* <div className="p-4 mt-auto">
-        <Menu as="div" className="relative w-full">
-          <Menu.Button className="flex items-center gap-3 w-full cursor-pointer hover:bg-green-50 px-3 py-2 rounded-lg transition-colors" title={!sidebarOpen ? "Administrator" : ""}>
-            <div className="w-8 h-8 flex items-center justify-center bg-green-100 rounded-full">
-              <User className="w-5 h-5 text-green-700" />
-            </div>
-            {sidebarOpen && (
-              <div className="flex flex-col text-left">
-                <span className="text-green-900 font-medium text-sm">Administrator</span>
-                <span className="text-slate-500 text-xs">admin@example.com</span>
-              </div>
-            )}
-          </Menu.Button>
-
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
-            <Menu.Items className={`absolute top-0 left-full ml-2 w-36`}>
-              <Menu.Item>
-                {({ active }) => (
-                  <button className={`w-full text-left px-3 py-2 text-red-600 rounded hover:bg-red-50 flex items-center gap-2`} onClick={() => alert("Logout clicked!")}>
-                    <LogOut className="w-4 h-4" /> Logout
-                  </button>
-                )}
-              </Menu.Item>
-            </Menu.Items>
-          </Transition>
-        </Menu>
-      </div> */}
     </aside>
   );
 }

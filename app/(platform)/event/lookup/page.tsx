@@ -1,63 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft, Search, Download, CheckCircle } from "lucide-react";
+import QRCode from "react-qr-code";
+
+interface EventOption {
+  id: number;
+  name: string;
+}
+
+interface Participant {
+  id: string;
+  fullName: string;
+  email: string;
+  ticketCode: string;
+  event: string;
+  date: string;
+  location: string;
+  seat: string;
+}
 
 export default function Lookup() {
   const [email, setEmail] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState<number | "">("");
+  const [events, setEvents] = useState<EventOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<null | {
-    id: string;
-    name: string;
-    event: string;
-    date: string;
-    location: string;
-    seat: string;
-  }>(null);
+  const [result, setResult] = useState<Participant | null>(null);
   const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
-  const dummyData = [
-    {
-      id: "EVT-2025-0001",
-      email: "firda@example.com",
-      birthDate: "1995-08-10",
-      name: "Firda Rosiana",
-      event: "Gatepass Launch Event",
-      date: "2025-09-15",
-      location: "Jakarta Convention Center, Jakarta",
-      seat: "A12",
-    },
-    {
-      id: "EVT-2025-0002",
-      email: "john.doe@example.com",
-      birthDate: "1990-01-15",
-      name: "John Doe",
-      event: "Annual Tech Conference 2025",
-      date: "2025-11-03",
-      location: "Bali Nusa Dua Convention Center, Bali",
-      seat: "VIP-B5",
-    },
-    {
-      id: "EVT-2025-0003",
-      email: "jane.smith@example.com",
-      birthDate: "1988-12-05",
-      name: "Jane Smith",
-      event: "Music Festival 2025",
-      date: "2025-08-30",
-      location: "Gelora Bung Karno Stadium, Jakarta",
-      seat: "F-221",
-    },
-  ];
+  // Fetch events untuk dropdown
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const res = await fetch("/api/events");
+        const data = await res.json();
+        setEvents(data || []);
+      } catch (err) {
+        console.error("Gagal fetch events:", err);
+      }
+    }
+    fetchEvents();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setResult(null);
 
-    if (!email.trim() || !birthDate.trim()) {
-      setError("Email dan tanggal lahir wajib diisi.");
+    if (!email.trim() || !birthDate.trim() || !selectedEventId) {
+      setError("Email, tanggal lahir, dan event wajib diisi.");
       return;
     }
 
@@ -69,15 +63,31 @@ export default function Lookup() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      const found = dummyData.find((item) => item.email.toLowerCase() === email.toLowerCase() && item.birthDate === birthDate);
-      if (found) {
-        setResult(found);
+    try {
+      const res = await fetch("/api/participants/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          birthDate,
+          eventId: selectedEventId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Data tidak ditemukan. Silakan coba lagi.");
       } else {
-        setError("Data tidak ditemukan. Silakan coba lagi.");
+        setResult(data.participant);
+        setShowModal(true); // buka modal
       }
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan server. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,7 +95,7 @@ export default function Lookup() {
       <div className="w-full max-w-lg flex flex-col gap-8">
         {/* Header */}
         <div className="flex flex-col gap-2">
-          <Link href="/" className="flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-semibold w-fit" aria-label="Kembali ke Beranda">
+          <Link href="/" className="flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-semibold w-fit">
             <ArrowLeft className="w-4 h-4" /> Kembali
           </Link>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-800">Cari Tiket Anda</h1>
@@ -94,81 +104,92 @@ export default function Lookup() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 bg-white p-8 rounded-2xl shadow-lg shadow-green-200 border border-green-200">
           <div>
-            <label htmlFor="email" className="font-semibold text-slate-700 text-base">
-              Email
-            </label>
+            <label className="font-semibold text-slate-700 text-base">Email</label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="contoh@domain.com"
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
+              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 w-full text-lg text-slate-900"
               disabled={loading}
               required
             />
           </div>
 
           <div>
-            <label htmlFor="birthDate" className="font-semibold text-slate-700 text-base">
-              Tanggal Lahir
-            </label>
+            <label className="font-semibold text-slate-700 text-base">Tanggal Lahir</label>
             <input
-              id="birthDate"
               type="date"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
+              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 w-full text-lg text-slate-900"
               disabled={loading}
               required
             />
           </div>
 
+          <div>
+            <label className="font-semibold text-slate-700 text-base">Pilih Event</label>
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(Number(e.target.value))}
+              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 w-full text-lg text-slate-900"
+              disabled={loading || events.length === 0}
+              required
+            >
+              <option value="">-- Pilih Event --</option>
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
-                       text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 
-                       disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+            className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
           >
             <Search className="w-6 h-6" />
             {loading ? "Mencari..." : "Cari Tiket"}
           </button>
         </form>
 
-        {/* Error */}
         {error && <p className="text-red-600 font-semibold text-center text-lg">{error}</p>}
-
-        {/* Result */}
-        {result && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg shadow-green-200 border border-green-200">
-            <div className="flex items-center gap-3 p-4 mb-4 bg-green-50 border border-green-300 rounded-lg">
-              <CheckCircle className="text-green-600 w-6 h-6" />
-              <span className="text-green-700 font-semibold text-base">Tiket ditemukan!</span>
-            </div>
-
-            <div className="border border-dashed border-green-400 rounded-lg p-5">
-              <p className="text-sm text-slate-500 mb-1">
-                ID Tiket: <span className="font-mono">{result.id}</span>
-              </p>
-              <p className="text-lg font-bold mb-1">{result.name}</p>
-              <p className="text-green-600 font-semibold mb-2">{result.event}</p>
-              <p className="text-sm text-slate-600 mb-1">📅 {result.date}</p>
-              <p className="text-sm text-slate-600 mb-3">📍 {result.location}</p>
-              <p className="text-sm font-semibold">🪑 Nomor Kursi: {result.seat}</p>
-            </div>
-
-            <button
-              onClick={() => alert("Fitur unduh QR Code belum tersedia")}
-              className="flex items-center justify-center gap-3 w-full mt-4 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 
-                         text-white text-lg font-semibold rounded-xl shadow-lg shadow-blue-300/50 transition-all duration-300 
-                         transform hover:scale-[1.02]"
-            >
-              <Download className="w-6 h-6" /> Unduh QR Code
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Modal */}
+      {showModal && result && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+            {/* Close button */}
+            <button onClick={() => setShowModal(false)} className="absolute top-3 right-3 text-slate-500 hover:text-slate-700">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center gap-6">
+              {/* QR Code */}
+              <h1 className="text-xl font-bold text-green-600">Ticket Found!</h1>
+              <div className="flex justify-center my-2">
+                <QRCode value={JSON.stringify(result)} size={180} />
+              </div>
+
+              {/* Ticket Info */}
+              <div className="w-full flex flex-col gap-2 bg-green-50 p-4 rounded-lg border border-green-200 text-center">
+                <p className="text-sm font-semibold text-slate-600 mt-2">Ticket ID</p>
+                <p className="text-base font-mono bg-slate-100 px-3 py-1 rounded-lg shadow-inner">{result.ticketCode}</p>
+
+                <p className="font-bold text-slate-800">{result.fullName}</p>
+                <p className="text-base text-slate-800">{result.email}</p>
+
+                <p className="text-sm font-semibold text-slate-600 mt-4">Event</p>
+                <p className="text-base text-slate-800">{result.event}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

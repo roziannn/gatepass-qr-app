@@ -6,7 +6,7 @@ import { Trash, Download, Upload } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function AdminSettingsPage() {
-  const [siteName, setSiteName] = useState("My Awesome App");
+  const [siteName, setSiteName] = useState("GATEPASS");
   const [adminEmail, setAdminEmail] = useState("admin@example.com");
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
@@ -80,24 +80,22 @@ export default function AdminSettingsPage() {
       <main className="flex-1 p-6 space-y-6">
         {/* General Settings */}
         <section className="p-6 rounded-xl shadow border border-gray-200 text-slate-800 space-y-4">
-          <h2 className="text-xl font-semibold">General Settings</h2>
+          <h2 className="text-xl font-semibold">General</h2>
           <div>
             <label className="block font-medium mb-1">Site Name</label>
-            <input type="text" value={siteName} onChange={(e) => setSiteName(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 bg-white text-slate-800" />
+            <input type="text" value={siteName} readOnly className="w-full border border-gray-300 rounded px-3 py-2 outline-none  bg-gray-100 text-slate-800" />
           </div>
+
           <div>
             <label className="block font-medium mb-1">Admin Email</label>
-            <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 bg-white text-slate-800" />
+            <input type="email" value={adminEmail} readOnly className="w-full border border-gray-300 rounded px-3 py-2 outline-none  bg-gray-100 text-slate-800" />
           </div>
-          <button onClick={handleSaveGeneral} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
-            {loading ? "Saving..." : "Save Settings"}
-          </button>
         </section>
 
         {/* View System Logs */}
         <section className="p-6 rounded-xl shadow border border-gray-200 text-slate-800 space-y-4">
           <h2 className="text-xl font-semibold">View System Logs</h2>
-          <p>Di sini admin bisa melihat logs aktivitas sistem (belum diimplementasi)</p>
+          <p>Lihat logs aktivitas sistem (next feature 🚀)</p>
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">View Logs</button>
         </section>
 
