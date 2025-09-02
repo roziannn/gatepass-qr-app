@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
-import { Eye, ArrowUpDown, Check, Search } from "lucide-react";
-import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from "@headlessui/react";
+import { Eye, ArrowUpDown, Check, Search, FileDown } from "lucide-react";
+import { Listbox, ListboxButton, ListboxOptions, ListboxOption, Button } from "@headlessui/react";
 import { Participant, EventParticipant } from "../../../../../types/participant";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import Header from "@/components/Header";
 
@@ -40,14 +42,49 @@ export default function ParticipantsPage() {
       setParticipants([]);
     } finally {
       setLoadingParticipants(false);
-      setSearch(""); // reset search tiap kali ganti event
+      setSearch("");
     }
   };
 
   const filteredParticipants = participants.filter((p) => p.fullName.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase()) || p.ticketCode.toLowerCase().includes(search.toLowerCase()));
 
+  const handleDownloadPDF = async () => {
+    if (!selectedEvent) return;
+
+    try {
+      // get data peserta dari API
+      const res = await fetch(`/api/events/${selectedEvent.id}/participants`);
+      const participantsData: Participant[] = await res.json();
+
+      // 'landscape' sebagai parameter kedua
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Judul
+      doc.setFontSize(16);
+      doc.text(`Daftar Peserta - ${selectedEvent.name}`, pageWidth / 2, 15, { align: "center" });
+
+      // Tabel
+      autoTable(doc, {
+        startY: 25,
+        head: [["No", "Nama", "Email", "Register Date", "Status", "Scan Date"]],
+        body: participantsData.map((p, idx) => [idx + 1, p.fullName, p.email, p.registeredAt || "-", p.status || "-", p.scanDate || "-"]),
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [34, 197, 94] },
+      });
+
+      doc.save(`peserta_${selectedEvent.name}.pdf`);
+    } catch (err) {
+      console.error("Gagal download PDF:", err);
+    }
+  };
+
   const columns: TableColumn<Participant>[] = [
-    { name: "No Tiket", selector: (row) => row.ticketCode, sortable: true, grow: 2 },
     { name: "Nama", selector: (row) => row.fullName, sortable: true, grow: 2 },
     { name: "Email", selector: (row) => row.email, sortable: true, grow: 2 },
     { name: "Register Date", selector: (row) => row.registeredAt, sortable: true, grow: 1.5 },
@@ -103,17 +140,24 @@ export default function ParticipantsPage() {
             </Listbox>
           </div>
 
-          {/* Search muncul hanya kalau ada event terpilih */}
+          {/* Search + tombol Export PDF */}
           {selectedEvent && (
-            <div className="relative w-full sm:max-w-xs">
-              <input
-                type="text"
-                placeholder="Cari peserta..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded border border-gray-300 pl-9 pr-3 py-2 text-gray-700 shadow-sm focus:ring-2 focus:ring-green-400 outline-none"
-              />
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex items-center gap-3 w-full sm:max-w-md">
+              <Button onClick={handleDownloadPDF} className="flex items-center gap-2 px-3 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600 shadow">
+                <FileDown className="w-4 h-4" />
+                Export PDF
+              </Button>
+
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Cari peserta..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded border border-gray-300 pl-9 pr-3 py-2 text-gray-700 shadow-sm focus:ring-2 focus:ring-green-400 outline-none"
+                />
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
             </div>
           )}
         </div>

@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
-import { Eye, PlusCircle, Search } from "lucide-react";
+import { Eye, FileDown, PlusCircle, Search } from "lucide-react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { ApiEvent, EventListItem } from "../../../../../types/event";
+import Link from "next/link";
 import { toast } from "react-toastify";
 import Header from "@/components/Header";
 import Badge from "@/components/Badge";
 import SelectList from "@/components/SelectList";
+import { Button } from "@headlessui/react";
+
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function EventListPage() {
   const [events, setEvents] = useState<EventListItem[]>([]);
@@ -58,6 +62,28 @@ export default function EventListPage() {
 
   const categories = Array.from(new Set(events.map((e) => e.category)));
   const statuses = Array.from(new Set(events.map((e) => e.status)));
+
+  const handleExportPDF = () => {
+    if (!events.length) return;
+
+    const doc = new jsPDF("landscape"); // landscape
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Judul
+    doc.setFontSize(16);
+    doc.text(`Data Event`, pageWidth / 2, 15, { align: "center" });
+
+    // Tabel
+    autoTable(doc, {
+      startY: 25,
+      head: [["No", "Nama Event", "Tanggal", "Lokasi", "Kategori", "Kuota", "Reg", "Status"]],
+      body: filteredEvents.map((e, idx) => [idx + 1, e.name, e.date, e.location, e.category, e.quota, e.registered, e.status]),
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [34, 197, 94] },
+    });
+
+    doc.save("data_event.pdf");
+  };
 
   const columns: TableColumn<EventListItem>[] = [
     {
@@ -190,10 +216,16 @@ export default function EventListPage() {
             <SelectList value={selectedStatus} onChange={setSelectedStatus} options={statuses} placeholder="Semua Status" />
           </div>
 
-          <Link href="/admin/data/event/create" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
-            <PlusCircle className="w-5 h-5" />
-            Add Event
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleExportPDF} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition">
+              <FileDown className="w-5 h-5" />
+              Export PDF
+            </Button>
+            <Link href="/admin/data/event/create" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+              <PlusCircle className="w-5 h-5" />
+              Add Event
+            </Link>
+          </div>
         </div>
 
         <div className="relative">

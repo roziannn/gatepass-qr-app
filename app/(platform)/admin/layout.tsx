@@ -8,7 +8,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex bg-slate-50">
       <Sidebar />
       <main className="flex-1 flex flex-col">{children}</main>
-
       <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover draggable theme="colored" />
     </div>
   );
