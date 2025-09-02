@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, FormInput, CheckCircle, Download } from "lucide-react";
-import QRCode from "react-qr-code";
+import { ArrowLeft, FormInput } from "lucide-react";
+import DownloadTicket from "./downloadTicket"; // import component partial
 
 interface EventOption {
   id: number;
@@ -19,9 +19,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-
   const [qrData, setQrData] = useState<string | null>(null);
-  const qrRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -35,44 +33,6 @@ export default function Register() {
     }
     fetchEvents();
   }, []);
-
-  const downloadQRCode = () => {
-    if (!qrRef.current) return;
-    const svg = qrRef.current;
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-    const size = 180;
-    canvas.width = size;
-    canvas.height = size;
-
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-
-    img.onload = () => {
-      ctx?.clearRect(0, 0, size, size);
-      ctx?.drawImage(img, 0, 0, size, size);
-      URL.revokeObjectURL(url);
-
-      const pngUrl = canvas.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = pngUrl;
-      downloadLink.download = "qrcode.png";
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-    };
-
-    img.onerror = () => {
-      alert("Gagal mengunduh QR Code.");
-      URL.revokeObjectURL(url);
-    };
-
-    img.src = url;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,17 +52,11 @@ export default function Register() {
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName,
-          email,
-          birthDate,
-          eventId: selectedEventId,
-        }),
+        body: JSON.stringify({ fullName, email, birthDate, eventId: selectedEventId }),
       });
 
       const data = await res.json();
@@ -113,8 +67,6 @@ export default function Register() {
       }
 
       setSuccess(true);
-
-      // QR code data
       const qrString = JSON.stringify({
         id: data.participant.id,
         fullName: data.participant.fullName,
@@ -131,6 +83,8 @@ export default function Register() {
     }
   };
 
+  const selectedEventName = events.find((ev) => ev.id === selectedEventId)?.name || "";
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-10 text-slate-900">
       <div className="w-full max-w-lg flex flex-col gap-8">
@@ -142,7 +96,8 @@ export default function Register() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 bg-white p-8 rounded-2xl shadow-lg shadow-green-200 border border-green-200">
-          <div>
+          {/* Nama Lengkap */}
+          <div className="flex flex-col">
             <label htmlFor="fullName" className="font-semibold text-slate-700 text-base">
               Nama Lengkap
             </label>
@@ -153,12 +108,12 @@ export default function Register() {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Nama lengkap"
               className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              disabled={loading}
               required
             />
           </div>
 
-          <div>
+          {/* Email */}
+          <div className="flex flex-col">
             <label htmlFor="email" className="font-semibold text-slate-700 text-base">
               Email
             </label>
@@ -169,12 +124,12 @@ export default function Register() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="contoh@domain.com"
               className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              disabled={loading}
               required
             />
           </div>
 
-          <div>
+          {/* Tanggal Lahir */}
+          <div className="flex flex-col">
             <label htmlFor="birthDate" className="font-semibold text-slate-700 text-base">
               Tanggal Lahir
             </label>
@@ -184,12 +139,12 @@ export default function Register() {
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              disabled={loading}
               required
             />
           </div>
 
-          <div>
+          {/* Pilih Event */}
+          <div className="flex flex-col">
             <label htmlFor="event" className="font-semibold text-slate-700 text-base">
               Pilih Event
             </label>
@@ -198,7 +153,6 @@ export default function Register() {
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(Number(e.target.value))}
               className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              disabled={loading}
               required
             >
               <option value="">-- Pilih Event --</option>
@@ -210,12 +164,11 @@ export default function Register() {
             </select>
           </div>
 
+          {/* Tombol Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 
-                       text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 
-                       disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+            className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
           >
             <FormInput className="w-6 h-6" />
             {loading ? "Mendaftar..." : "Daftar Sekarang"}
@@ -224,32 +177,7 @@ export default function Register() {
 
         {error && <p className="text-red-600 font-semibold text-center text-lg">{error}</p>}
 
-        {success && qrData && (
-          <div className="bg-green-50 border border-green-300 rounded-lg p-5 flex flex-col items-center gap-4">
-            <CheckCircle className="text-green-600 w-6 h-6" />
-            <span className="text-green-700 font-semibold text-base">Pendaftaran berhasil! Silakan cek QR Code Anda di bawah.</span>
-
-            <div className="bg-white p-6 rounded-lg mt-2 shadow-md">
-              <QRCode
-                value={qrData}
-                size={180}
-                ref={(el) => {
-                  qrRef.current = el;
-                }}
-              />
-            </div>
-
-            <button
-              onClick={downloadQRCode}
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition duration-300 select-none"
-              type="button"
-              aria-label="Download QR Code"
-            >
-              <Download className="w-5 h-5" />
-              Download QR
-            </button>
-          </div>
-        )}
+        {success && qrData && <DownloadTicket qrData={qrData} fullName={fullName} email={email} eventName={selectedEventName} ticketCode={JSON.parse(qrData).ticketCode} />}
       </div>
     </main>
   );

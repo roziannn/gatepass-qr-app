@@ -130,7 +130,9 @@ export default function AdminLogin() {
         )}
 
         {/* Footer kecil */}
-        <footer className="text-center text-slate-500 text-xs sm:text-sm mt-8 select-none">&copy; 2025 YourCompany. All rights reserved.</footer>
+        <footer className="text-center text-slate-500 text-xs sm:text-sm mt-8 select-none">
+          &copy; 2025 <b> GatePassid.</b> All rights reserved.
+        </footer>
       </div>
     </main>
   );

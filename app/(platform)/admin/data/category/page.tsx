@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Description, Dialog, DialogPanel, DialogTitle, Field, Input, Label } from "@headlessui/react";
-import { PlusCircle, Search, Trash2, Edit } from "lucide-react";
+import { Search, Trash2, Edit, Save, X } from "lucide-react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "@/components/Header";
 import ModalConfirm from "@/components/ModalConfirm";
+import { Button } from "@headlessui/react";
 
 interface Category {
   id: number;
@@ -17,19 +17,12 @@ interface Category {
 export default function EventCategoryListPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
-
-  const handleDeleteClick = (id: number, name: string) => {
-    setDeleteId(id);
-    setDeleteName(name);
-    setConfirmOpen(true);
-  };
 
   useEffect(() => {
     fetch("/api/categories")
@@ -40,12 +33,6 @@ export default function EventCategoryListPage() {
 
   const filteredCategories = useMemo(() => categories.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase())), [filter, categories]);
 
-  const openEditModal = (category: Category) => {
-    setNewCategory(category.name);
-    setEditingId(category.id);
-    setModalOpen(true);
-  };
-
   const handleSave = async () => {
     if (!newCategory.trim()) {
       toast.warning("Nama kategori tidak boleh kosong");
@@ -54,32 +41,31 @@ export default function EventCategoryListPage() {
 
     try {
       let res: Response, data: Category | { error: string };
-      // save edit
+
       if (editingId) {
+        // update
         res = await fetch(`/api/categories/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: newCategory }),
         });
-        data = (await res.json()) as Category | { error: string };
-        if (!res.ok) return toast.error("Gagal mengedit kategori: " + ("error" in data ? data.error : ""));
+        data = await res.json();
+        if (!res.ok) return toast.error("Gagal update kategori");
         setCategories(categories.map((c) => (c.id === editingId ? (data as Category) : c)));
         toast.success("Kategori berhasil diubah");
-      }
-      // save create
-      else {
+      } else {
+        // create
         res = await fetch("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: newCategory }),
         });
-        data = (await res.json()) as Category | { error: string };
-        if (!res.ok) return toast.error("Gagal membuat kategori: " + ("error" in data ? data.error : ""));
+        data = await res.json();
+        if (!res.ok) return toast.error("Gagal tambah kategori");
         setCategories([...categories, data as Category]);
         toast.success("Kategori berhasil ditambahkan");
       }
 
-      setModalOpen(false);
       setNewCategory("");
       setEditingId(null);
     } catch {
@@ -87,16 +73,21 @@ export default function EventCategoryListPage() {
     }
   };
 
+  const handleDeleteClick = (id: number, name: string) => {
+    setDeleteId(id);
+    setDeleteName(name);
+    setConfirmOpen(true);
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
     try {
       const res = await fetch(`/api/categories/${deleteId}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) return toast.error(data.error || "Gagal menghapus kategori");
+      if (!res.ok) throw new Error();
       setCategories(categories.filter((c) => c.id !== deleteId));
       toast.success("Kategori berhasil dihapus");
     } catch {
-      toast.error("Terjadi kesalahan saat menghapus kategori");
+      toast.error("Gagal menghapus kategori");
     } finally {
       setConfirmOpen(false);
       setDeleteId(null);
@@ -110,13 +101,18 @@ export default function EventCategoryListPage() {
       name: "Aksi",
       cell: (row) => (
         <div className="flex gap-2">
-          <button className="p-1 rounded hover:bg-blue-50 text-blue-600" onClick={() => openEditModal(row)}>
+          <button
+            className="p-1 rounded hover:bg-blue-50 text-slate-600"
+            onClick={() => {
+              setNewCategory(row.name);
+              setEditingId(row.id);
+            }}
+          >
             <Edit className="w-5 h-5" />
           </button>
           <button className="p-1 rounded hover:bg-red-50 text-red-600" onClick={() => handleDeleteClick(row.id, row.name)}>
             <Trash2 className="w-5 h-5" />
           </button>
-          <ModalConfirm isOpen={confirmOpen} title="Konfirmasi Hapus" message={`Apakah Anda yakin ingin menghapus kategori "${deleteName}"?`} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
         </div>
       ),
       ignoreRowClick: true,
@@ -126,73 +122,68 @@ export default function EventCategoryListPage() {
   ];
 
   return (
-    <>
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <Header />
-        <main className="flex-1 p-6">
-          <h1 className="text-2xl font-bold text-slate-800 mb-6">Daftar Kategori Event</h1>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <Header />
+      <main className="flex-1 p-6">
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Data Category</h1>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
-            <div className="flex items-center bg-white border border-gray-300 rounded-md px-3 py-2 max-w-xs w-full sm:w-auto hover:border-green-500 transition">
-              <Search className="w-5 h-5 text-gray-500 mr-2" />
-              <input type="text" placeholder="Cari Kategori..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full border-none outline-none text-gray-700 placeholder-gray-400 text-sm" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 mt-4">
+          {/* LEFT SIDE */}
+          <div className="md:col-span-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6">
+              <div className="flex items-center bg-white border border-gray-300 rounded-md px-3 py-2 max-w-xs w-full sm:w-auto hover:border-green-500 transition">
+                <Search className="w-5 h-5 text-gray-500 mr-2" />
+                <input type="text" placeholder="Cari Kategori..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full border-none outline-none text-gray-700 placeholder-gray-400 text-sm" />
+              </div>
             </div>
 
-            <button
-              onClick={() => {
-                setModalOpen(true);
-                setEditingId(null);
-                setNewCategory("");
+            <DataTable
+              columns={columns}
+              data={filteredCategories}
+              pagination
+              highlightOnHover
+              responsive
+              striped
+              noHeader
+              customStyles={{
+                headCells: { style: { fontWeight: "bold", fontSize: 16 } },
+                rows: { style: { fontSize: 15 } },
               }}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
-            >
-              <PlusCircle className="w-5 h-5" /> Tambah Kategori
-            </button>
+            />
           </div>
 
-          <DataTable columns={columns} data={filteredCategories} pagination highlightOnHover responsive striped noHeader customStyles={{ headCells: { style: { fontWeight: "bold", fontSize: 16 } }, rows: { style: { fontSize: 15 } } }} />
+          {/* RIGHT SIDE */}
+          <div className="border-l p-5">
+            <h2 className="text-lg font-bold mb-4 text-slate-800">{editingId ? "Edit Kategori" : "Tambah Kategori"}</h2>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center bg-white border border-gray-300 rounded-md p-3 max-w-xs w-full sm:w-auto hover:border-green-500 transition">
+                <input type="text" placeholder="Nama kategori" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full border-none outline-none text-gray-700 placeholder-gray-400 text-sm" />
+              </div>
 
-          <Dialog
-            open={modalOpen}
-            as="div"
-            className="relative z-50"
-            onClose={() => {
-              setModalOpen(false);
-              setEditingId(null);
-            }}
-          >
-            <div className="fixed inset-0 bg-black/30" />
-            <div className="fixed inset-0 flex items-center justify-center p-4">
-              <DialogPanel className="w-full max-w-md rounded-xl bg-white p-6">
-                <DialogTitle className="text-lg font-bold mb-2 text-slate-800">{editingId ? "Edit Kategori" : "Tambah Kategori"}</DialogTitle>
-                <Field className="space-y-3">
-                  <Label className="text-sm font-semibold text-slate-700">Nama Kategori</Label>
-                  <Input
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring focus:ring-green-200"
-                  />
-                  <Description className="text-sm text-gray-500">Masukkan nama kategori event.</Description>
-                </Field>
-                <div className="mt-6 flex justify-end gap-3">
+              <div className="flex gap-2">
+                <Button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" onClick={handleSave}>
+                  <Save className="w-4 h-4" />
+                  <span>Save</span>
+                </Button>
+
+                {editingId && (
                   <button
-                    className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-slate-700"
+                    className="flex items-center gap-1 px-4 py-2 rounded-lg bg-gray-200 text-slate-700 hover:bg-gray-300"
                     onClick={() => {
-                      setModalOpen(false);
                       setEditingId(null);
+                      setNewCategory("");
                     }}
                   >
-                    Batal
+                    <X className="w-4 h-4" /> Batal
                   </button>
-                  <button className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700" onClick={handleSave}>
-                    Simpan
-                  </button>
-                </div>
-              </DialogPanel>
+                )}
+              </div>
             </div>
-          </Dialog>
-        </main>
-      </div>
-    </>
+          </div>
+        </div>
+
+        <ModalConfirm isOpen={confirmOpen} title="Konfirmasi Hapus" message={`Apakah Anda yakin ingin menghapus kategori "${deleteName}"?`} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
+      </main>
+    </div>
   );
 }

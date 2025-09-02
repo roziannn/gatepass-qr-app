@@ -25,4 +25,5 @@ export interface EventListItem {
   registered: number;
   status: string;
   statusColor: StatusColor;
+  createdAt: string;
 }

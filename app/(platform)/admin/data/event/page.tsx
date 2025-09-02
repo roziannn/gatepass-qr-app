@@ -32,7 +32,7 @@ export default function EventListPage() {
           name: e.name,
           date: new Date(e.date).toLocaleDateString("id-ID", {
             day: "2-digit",
-            month: "long",
+            month: "short",
             year: "numeric",
           }),
           location: e.location,
@@ -41,6 +41,11 @@ export default function EventListPage() {
           registered: e.participantCount,
           status: e.status,
           statusColor: e.status === "ACTIVE" ? "text-blue-700" : e.status === "PENDING" ? "text-yellow-600" : "text-red-600",
+          createdAt: new Date(e.createdAt).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
         }));
         setEvents(mapped);
       })
@@ -55,12 +60,59 @@ export default function EventListPage() {
   const statuses = Array.from(new Set(events.map((e) => e.status)));
 
   const columns: TableColumn<EventListItem>[] = [
-    { name: "Nama Event", selector: (row) => row.name, sortable: true, wrap: true, grow: 2.5 },
-    { name: "Tanggal", selector: (row) => row.date, sortable: true, grow: 1.5 },
-    { name: "Lokasi", selector: (row) => row.location, sortable: true, wrap: true, grow: 2.5 },
-    { name: "Kategori", selector: (row) => row.category, sortable: true, grow: 1 },
-    { name: "Kuota", selector: (row) => row.quota, sortable: true, right: true },
-    { name: "Registered", selector: (row) => row.registered, sortable: true, right: true },
+    {
+      name: "Nama Event",
+      selector: (row) => row.name,
+      sortable: true,
+      wrap: true,
+      grow: 3,
+      minWidth: "200px",
+    },
+    {
+      name: "Tanggal",
+      selector: (row) => row.date,
+      sortable: true,
+      grow: 1.5,
+      minWidth: "110px",
+    },
+    {
+      name: "Lokasi",
+      selector: (row) => row.location,
+      sortable: true,
+      wrap: true,
+      grow: 3,
+      minWidth: "180px",
+    },
+    {
+      name: "Kategori",
+      selector: (row) => row.category,
+      sortable: true,
+      grow: 1,
+      minWidth: "120px",
+    },
+    {
+      name: "Kuota",
+      selector: (row) => row.quota,
+      sortable: true,
+      right: true,
+      grow: 0.8,
+      minWidth: "80px",
+    },
+    {
+      name: "Reg",
+      selector: (row) => row.registered,
+      sortable: true,
+      right: true,
+      grow: 0.8,
+      minWidth: "90px",
+    },
+    {
+      name: "CreatedAt",
+      selector: (row) => row.createdAt,
+      sortable: true,
+      grow: 1.2,
+      minWidth: "120px",
+    },
     {
       name: "Status",
       cell: (row) => {
@@ -69,6 +121,8 @@ export default function EventListPage() {
       },
       sortable: true,
       center: true,
+      grow: 1.5,
+      minWidth: "100px",
     },
     {
       name: "Aksi",
@@ -80,6 +134,8 @@ export default function EventListPage() {
       ignoreRowClick: true,
       allowOverflow: true,
       button: true,
+      grow: 0.5,
+      minWidth: "70px",
     },
   ];
 
@@ -101,7 +157,7 @@ export default function EventListPage() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Daftar Event</h1>
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Data Event</h1>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6 mt-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex items-center bg-white rounded-md border border-gray-300 px-3 py-2 max-w-xs w-full sm:w-auto hover:border-green-500 transition">
@@ -116,7 +172,7 @@ export default function EventListPage() {
 
           <Link href="/admin/data/event/create" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
             <PlusCircle className="w-5 h-5" />
-            Tambah Event
+            Add Event
           </Link>
         </div>
 
@@ -135,7 +191,7 @@ export default function EventListPage() {
             responsive
             striped
             noHeader
-            progressPending={false}
+            progressPending={loading}
             customStyles={customStyles}
             noDataComponent={!loading ? <div className="p-4 text-center text-gray-500">There are no records to display</div> : null}
           />
