@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { usePathname } from "next/navigation";
-import { Users, Calendar, User, Search, SlidersHorizontal, CheckCircle, Ticket } from "lucide-react";
-import DataTable, { TableColumn } from "react-data-table-component";
+import { useState, useEffect } from "react";
+import { Users, Calendar, CheckCircle, Ticket } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, LineChart, Line } from "recharts";
 import Header from "@/components/Header";
 
@@ -11,206 +9,144 @@ interface Event {
   id: number;
   name: string;
   date: string;
-  participants: number;
-  kuota: number;
+  quota: number;
   status: string;
-  statusColor: string;
+  _count: { participants: number };
+}
+
+interface Stats {
+  totalEvents: number;
+  totalParticipants: number;
+  checkInToday: number;
+  ticketsSold: number;
+}
+
+interface ChartData {
+  month: string;
+  events?: number;
+  participants?: number;
 }
 
 export default function AdminDashboard() {
-  const [filterText, setFilterText] = useState("");
-  // const pathname = usePathname();
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [barChartData, setBarChartData] = useState<ChartData[]>([]);
+  const [participantsChartData, setParticipantsChartData] = useState<ChartData[]>([]);
 
-  const barChartData = [
-    { month: "Jan", events: 3 },
-    { month: "Feb", events: 5 },
-    { month: "Mar", events: 4 },
-    { month: "Apr", events: 7 },
-    { month: "Mei", events: 6 },
-    { month: "Jun", events: 8 },
-    { month: "Jul", events: 5 },
-    { month: "Agu", events: 9 },
-  ];
-
-  const participantsChartData = [
-    { month: "Jan", participants: 120 },
-    { month: "Feb", participants: 180 },
-    { month: "Mar", participants: 90 },
-    { month: "Apr", participants: 160 },
-    { month: "Mei", participants: 130 },
-    { month: "Jun", participants: 200 },
-    { month: "Jul", participants: 170 },
-    { month: "Agu", participants: 210 },
-  ];
-
-  const events: Event[] = [
-    {
-      id: 1,
-      name: "Seminar Teknologi",
-      date: "12 Agustus 2025",
-      participants: 150,
-      kuota: 150,
-      status: "Aktif",
-      statusColor: "text-green-700",
-    },
-    {
-      id: 2,
-      name: "Workshop AI",
-      date: "5 September 2025",
-      participants: 80,
-      kuota: 100,
-      status: "Aktif",
-      statusColor: "text-green-700",
-    },
-    {
-      id: 3,
-      name: "Konser Amal",
-      date: "20 Oktober 2025",
-      participants: 90,
-      kuota: 100,
-      status: "Menunggu",
-      statusColor: "text-yellow-600",
-    },
-  ];
-
-  const stats = [
-    {
-      title: "Total Event",
-      value: "12",
-      icon: <Calendar className="w-8 h-8 text-green-600 mx-auto mb-2" />,
-    },
-    {
-      title: "Total Peserta",
-      value: "320",
-      icon: <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />,
-    },
-    {
-      title: "Check-in Hari Ini",
-      value: "58",
-      icon: <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />,
-    },
-    {
-      title: "Tiket Terjual",
-      value: "280",
-      icon: <Ticket className="w-8 h-8 text-green-600 mx-auto mb-2" />,
-    },
-  ];
-
+  // badge colors
   const badgeColors: { [key: string]: string } = {
-    "text-green-700": "bg-green-100 text-green-700",
-    "text-yellow-600": "bg-yellow-100 text-yellow-600",
+    ACTIVE: "bg-blue-100 text-blue-700",
+    PENDING: "bg-yellow-100 text-yellow-600",
   };
 
-  const columns: TableColumn<Event>[] = [
-    {
-      name: "Nama Event",
-      selector: (row) => row.name,
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Tanggal",
-      selector: (row) => row.date,
-      sortable: true,
-      wrap: true,
-    },
-    {
-      name: "Kuota",
-      selector: (row) => row.kuota,
-      sortable: true,
-      right: true,
-    },
-    {
-      name: "Peserta",
-      selector: (row) => row.participants,
-      sortable: true,
-      right: true,
-    },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      cell: (row) => <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${badgeColors[row.statusColor] || "bg-gray-100 text-gray-700"}`}>{row.status}</span>,
-      sortable: true,
-      center: true,
-    },
-  ];
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch("/api/dashboard");
+        const data = await res.json();
 
-  const filteredEvents = useMemo(() => {
-    if (!filterText) return events;
-    return events.filter((event) => event.name.toLowerCase().includes(filterText.toLowerCase()));
-  }, [filterText, events]);
+        setUpcomingEvents(data.upcomingEvents);
+        setStats(data.stats);
+        setBarChartData(data.chartData.barChartData);
+        setParticipantsChartData(data.chartData.participantsChartData);
+      } catch (err) {
+        console.error("Gagal fetch dashboard", err);
+      }
+    };
 
-  const customStyles = {
-    headCells: {
-      style: {
-        fontWeight: "bold",
-        fontSize: "16px",
-      },
-    },
-  };
+    fetchDashboard();
+    const interval = setInterval(fetchDashboard, 10000); // refresh tiap 10 detik
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
 
-      {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {stats.map((card, i) => (
-            <div key={i} className="bg-white p-6 rounded-xl border border-green-100 text-center">
-              {card.icon}
-              <h2 className="text-3xl font-bold text-green-800">{card.value}</h2>
-              <p className="text-sm text-slate-500 mt-1">{card.title}</p>
-            </div>
-          ))}
+        {/* Upcoming Events */}
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-green-900 mb-4">Upcoming Events</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {upcomingEvents.map((event) => {
+              const progress = Math.min((event._count.participants / event.quota) * 100, 100);
+
+              return (
+                <div key={event.id} className="bg-white rounded-xl border border-green-100 shadow-md p-5 hover:shadow-lg transition relative">
+                  <div className="absolute top-4 right-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badgeColors[event.status] || "bg-gray-100 text-gray-700"}`}>{event.status}</span>
+                  </div>
+
+                  <div className="pr-12">
+                    <h4 className="text-md font-semibold text-green-800 break-words mb-1">{event.name}</h4>
+                    <p className="text-sm text-gray-500">{new Date(event.date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Peserta: {event._count.participants}/{event.quota}
+                    </p>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="my-8 border-t border-slate-200"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="bg-white p-6 rounded-xl border border-green-100">
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-white p-6 rounded-xl border border-green-100 text-center shadow-sm">
+              <Calendar className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h2 className="text-3xl font-bold text-green-800">{stats.totalEvents}</h2>
+              <p className="text-sm text-slate-500 mt-1">Total Event</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-green-100 text-center shadow-sm">
+              <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h2 className="text-3xl font-bold text-green-800">{stats.totalParticipants}</h2>
+              <p className="text-sm text-slate-500 mt-1">Total Participant</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-green-100 text-center shadow-sm">
+              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h2 className="text-3xl font-bold text-green-800">{stats.checkInToday}</h2>
+              <p className="text-sm text-slate-500 mt-1">Check-in Hari Ini</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-green-100 text-center shadow-sm">
+              <Ticket className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h2 className="text-3xl font-bold text-green-800">{stats.ticketsSold}</h2>
+              <p className="text-sm text-slate-500 mt-1">Tiket Terjual</p>
+            </div>
+          </div>
+        )}
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Statistik Event per Bulan</h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={barChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip contentStyle={{ fontSize: 14, color: "#374151" }} itemStyle={{ fontSize: 14 }} />
                 <Bar dataKey="events" fill="#16a34a" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-green-100">
+          <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Statistik Peserta per Bulan</h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={participantsChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip contentStyle={{ fontSize: 14, color: "#374151" }} itemStyle={{ fontSize: 14 }} />
                 <Line type="monotone" dataKey="participants" stroke="#4ade80" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
-        <div className="p-1 mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-800">Event Terbaru</h2>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-white rounded border border-gray-300 px-3 py-2 max-w-xs">
-                <Search className="w-5 h-5 text-gray-500 mr-2" />
-                <input type="text" placeholder="Cari No. Sampel" className="w-full border-none outline-none text-gray-700 placeholder-gray-400" value={filterText} onChange={(e) => setFilterText(e.target.value)} />
-              </div>
-
-              <button type="button" className="flex items-center gap-2 bg-white border border-gray-300 rounded px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                Advance Filter
-                <SlidersHorizontal className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <DataTable columns={columns} data={filteredEvents} pagination highlightOnHover responsive striped noHeader customStyles={customStyles} />
         </div>
       </main>
     </div>
