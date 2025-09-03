@@ -12,24 +12,6 @@ export default function AdminSettingsPage() {
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSaveGeneral = async () => {
-    setLoading(true);
-    try {
-      // Contoh: panggil API update settings
-      await fetch("/api/admin/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteName, adminEmail }),
-      });
-      toast.success("General settings disimpan!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal menyimpan settings!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleWipeDatabase = async () => {
     setLoading(true);
     try {
@@ -45,16 +27,14 @@ export default function AdminSettingsPage() {
   };
 
   const handleBackupDatabase = async () => {
-    setLoading(true);
-    try {
-      await fetch("/api/admin/backup", { method: "POST" });
-      toast.success("Backup database berhasil dibuat!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal backup database!");
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch("/api/backup");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "gatepass_app_qr_backup.sql";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleRestoreDatabase = async () => {
@@ -110,6 +90,7 @@ export default function AdminSettingsPage() {
             <button onClick={handleBackupDatabase} className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg">
               <Download className="w-4 h-4" /> Backup Database
             </button>
+
             <div className="flex items-center gap-2">
               <input type="file" accept=".sql,.zip" onChange={(e) => setRestoreFile(e.target.files?.[0] || null)} className="border border-gray-300 rounded px-3 py-2 bg-white text-slate-800" />
               <button onClick={handleRestoreDatabase} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
