@@ -18,7 +18,7 @@ export default function AdminLogin() {
 
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -34,20 +34,34 @@ export default function AdminLogin() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      if (email === "admin@example.com" && password === "admin123") {
-        toast.success("Login berhasil!");
-        setEmail("");
-        setPassword("");
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-        setTimeout(() => {
-          router.push("/admin/dashboard");
-        }, 1000);
-      } else {
-        toast.error("Email atau password salah.");
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Login gagal");
+        setLoading(false);
+        return;
       }
-    }, 1500);
+
+      toast.success("Login berhasil!");
+      setEmail("");
+      setPassword("");
+
+      setTimeout(() => {
+        router.push("/admin/dashboard");
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      toast.error("Login gagal");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

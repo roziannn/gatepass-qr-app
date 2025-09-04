@@ -20,12 +20,17 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Logout failed:", err);
+      window.location.href = "/login"; // fallback
+    }
   };
 
-  // Buat breadcrumb dari pathname, hapus "admin" kalau ada di awal
+  // create breadcrumb dari pathname, hapus "admin" kalau ada di awal
   const segments = pathname.split("/").filter(Boolean);
   if (segments[0]?.toLowerCase() === "admin") segments.shift();
 
