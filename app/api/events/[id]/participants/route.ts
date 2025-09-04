@@ -31,12 +31,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       email: p.email,
       status: p.status,
       ticketCode: p.ticketCode,
-      scanDate: p.scanDate,
-      registeredAt: new Date(p.createdAt).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
+      scanDate: p.scanDate
+        ? new Date(p.scanDate).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : null,
+      registeredAt: p.createdAt
+        ? new Date(p.createdAt).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : null,
     }));
 
     return NextResponse.json(formatted);

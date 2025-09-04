@@ -92,11 +92,6 @@ export default function ScanQRPage() {
                 {/* Kamera live terlihat jelas */}
                 <QrReader constraints={{ video: { facingMode: "environment" } }} onResult={handleScan} videoStyle={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "white" }} />
 
-                {/* Overlay frame transparan agar posisi QR jelas */}
-                <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-                  <div className="w-3/4 h-3/4 border-4 border-dashed border-green-500 rounded-xl"></div>
-                </div>
-
                 {/* Garis scan animasi */}
                 <div className="absolute inset-0 flex justify-center">
                   <div className="w-11/12 border-t-4 border-green-500 animate-scan"></div>

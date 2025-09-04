@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FormInput } from "lucide-react";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 interface EventOption {
   id: number;
@@ -66,7 +67,6 @@ export default function Register() {
 
       const eventName = events.find((ev) => ev.id === selectedEventId)?.name || "";
 
-      // Simpan participant ke sessionStorage
       sessionStorage.setItem(
         "participant",
         JSON.stringify({
@@ -77,7 +77,6 @@ export default function Register() {
         })
       );
 
-      // 3 detik sebelum redirect
       setTimeout(() => {
         router.push("/event/register/success");
       }, 3000);
@@ -89,92 +88,95 @@ export default function Register() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-10 text-slate-900">
-      <div className="w-full max-w-lg flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <Link href="/" className="flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-semibold w-fit">
-            <ArrowLeft className="w-4 h-4" /> Kembali
-          </Link>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-800">Formulir Pendaftaran</h1>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 bg-white p-8 rounded-2xl shadow-lg shadow-green-200 border border-green-200">
-          <div className="flex flex-col">
-            <label htmlFor="fullName" className="font-semibold text-slate-700 text-base">
-              Nama Lengkap
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Nama lengkap"
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              required
-            />
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100 p-6 sm:p-10 text-slate-900">
+        <div className="w-full max-w-md flex flex-col gap-8">
+          <div className="flex flex-col gap-2">
+            <Link href="/" className="flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-semibold w-fit">
+              <ArrowLeft className="w-4 h-4" /> Kembali
+            </Link>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-800">Formulir Pendaftaran</h1>
           </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="email" className="font-semibold text-slate-700 text-base">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="contoh@domain.com"
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-green-200">
+            <div className="flex flex-col">
+              <label htmlFor="fullName" className="font-semibold text-slate-700 text-base">
+                Nama Lengkap
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Nama lengkap"
+                className="mt-2 px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-base sm:text-lg"
+                required
+              />
+            </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="birthDate" className="font-semibold text-slate-700 text-base">
-              Tanggal Lahir
-            </label>
-            <input
-              id="birthDate"
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              required
-            />
-          </div>
+            <div className="flex flex-col">
+              <label htmlFor="email" className="font-semibold text-slate-700 text-base">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="contoh@domain.com"
+                className="mt-2 px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-base sm:text-lg"
+                required
+              />
+            </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="event" className="font-semibold text-slate-700 text-base">
-              Pilih Event
-            </label>
-            <select
-              id="event"
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(Number(e.target.value))}
-              className="mt-2 px-5 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-lg"
-              required
+            <div className="flex flex-col">
+              <label htmlFor="birthDate" className="font-semibold text-slate-700 text-base">
+                Tanggal Lahir
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="mt-2 px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-base sm:text-lg"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label htmlFor="event" className="font-semibold text-slate-700 text-base">
+                Pilih Event
+              </label>
+              <select
+                id="event"
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(Number(e.target.value))}
+                className="mt-2 px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 text-slate-900 w-full text-base sm:text-lg"
+                required
+              >
+                <option value="">-- Pilih Event --</option>
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || events.length === 0}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-base sm:text-lg font-semibold rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
             >
-              <option value="">-- Pilih Event --</option>
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <FormInput className="w-5 h-5" />
+              {loading ? "Mendaftar..." : "Daftar Sekarang"}
+            </button>
 
-          <button
-            type="submit"
-            disabled={loading || events.length === 0}
-            className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-semibold rounded-xl shadow-lg shadow-green-300/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
-          >
-            <FormInput className="w-6 h-6" />
-            {loading ? "Mendaftar..." : "Daftar Sekarang"}
-          </button>
-
-          {error && <p className="text-red-600 font-semibold text-center text-lg">{error}</p>}
-        </form>
-      </div>
-    </main>
+            {error && <p className="text-red-600 font-semibold text-center text-sm sm:text-base">{error}</p>}
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }

@@ -73,7 +73,7 @@ export default function ParticipantsPage() {
       autoTable(doc, {
         startY: 25,
         head: [["No", "Nama", "Email", "Register Date", "Status", "Scan Date"]],
-        body: participantsData.map((p, idx) => [idx + 1, p.fullName, p.email, p.registeredAt || "-", p.status || "-", p.scanDate || "-"]),
+        body: participantsData.map((p, idx) => [idx + 1, p.fullName, p.email, p.registeredAt || "-", p.status || "-", p.scanDate]),
         styles: { fontSize: 10 },
         headStyles: { fillColor: [34, 197, 94] },
       });
@@ -90,17 +90,17 @@ export default function ParticipantsPage() {
     { name: "Register Date", selector: (row) => row.registeredAt, sortable: true, grow: 1.5 },
     { name: "Status", selector: (row) => row.status, sortable: true, grow: 2 },
     { name: "Scan Date", selector: (row) => row.scanDate, sortable: true, grow: 2 },
-    {
-      name: "Aksi",
-      cell: () => (
-        <button className="p-1 rounded hover:bg-green-50 text-green-600">
-          <Eye className="w-5 h-5" />
-        </button>
-      ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
-    },
+    // {
+    //   name: "Aksi",
+    //   cell: () => (
+    //     <button className="p-1 rounded hover:bg-green-50 text-green-600">
+    //       <Eye className="w-5 h-5" />
+    //     </button>
+    //   ),
+    //   ignoreRowClick: true,
+    //   allowOverflow: true,
+    //   button: true,
+    // },
   ];
 
   const customStyles = {
@@ -164,7 +164,7 @@ export default function ParticipantsPage() {
 
         {selectedEvent ? (
           loadingParticipants ? (
-            <p>Loading peserta...</p>
+            <p className="text-gray-600">Loading peserta...</p>
           ) : (
             <DataTable columns={columns} data={filteredParticipants} pagination highlightOnHover responsive striped noHeader customStyles={customStyles} />
           )
