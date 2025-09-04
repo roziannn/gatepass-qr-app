@@ -19,6 +19,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Event tidak ditemukan" }, { status: 404 });
     }
 
+    // check apakah participant terdaftar dengan email dan eventId yang sama
+    const existingParticipant = await prisma.participant.findFirst({
+      where: {
+        email,
+        eventId: Number(eventId),
+      },
+    });
+
+    if (existingParticipant) {
+      return NextResponse.json(
+        {
+          error: "Email ini sudah terdaftar di event ini",
+          participant: existingParticipant,
+        },
+        { status: 400 }
+      );
+    }
+
     // create participant baru
     const participant = await prisma.participant.create({
       data: {

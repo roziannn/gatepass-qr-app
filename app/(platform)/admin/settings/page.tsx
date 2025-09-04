@@ -6,8 +6,8 @@ import { Trash, Download, Upload } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function AdminSettingsPage() {
-  const [siteName, setSiteName] = useState("GATEPASS");
-  const [adminEmail, setAdminEmail] = useState("admin@example.com");
+  const [siteName] = useState("GATEPASS");
+  const [adminEmail] = useState("admin@example.com");
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
