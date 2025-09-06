@@ -128,7 +128,7 @@ export default function AdminDashboard() {
               <BarChart data={barChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis allowDecimals={false} />
                 <Tooltip contentStyle={{ fontSize: 14, color: "#374151" }} itemStyle={{ fontSize: 14 }} />
                 <Bar dataKey="events" fill="#16a34a" />
               </BarChart>
