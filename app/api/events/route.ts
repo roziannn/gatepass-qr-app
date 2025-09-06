@@ -3,13 +3,31 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const events = await prisma.event.findMany({
-      include: { category: true },
-    });
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+
+    let events;
+
+    if (status?.toLowerCase() === "active") {
+      // event ACTIVE
+      const activeEvents = await prisma.event.findMany({
+        where: { status: "ACTIVE" },
+        include: { category: true },
+      });
+
+      events = activeEvents.filter((event) => event.participantCount < event.quota);
+    } else {
+      // get semua event (tanpa filter)
+      events = await prisma.event.findMany({
+        include: { category: true },
+      });
+    }
+
     return NextResponse.json(events);
   } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Gagal mengambil data event" }, { status: 500 });
   }
 }
@@ -38,6 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newEvent);
   } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Gagal membuat event" }, { status: 500 });
   }
 }

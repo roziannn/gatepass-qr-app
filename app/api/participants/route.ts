@@ -13,42 +13,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
     }
 
-    // search event by id
     const dbEvent = await prisma.event.findUnique({ where: { id: Number(eventId) } });
     if (!dbEvent) {
       return NextResponse.json({ error: "Event tidak ditemukan" }, { status: 404 });
     }
 
-    // check apakah participant terdaftar dengan email dan eventId yang sama
+    // cek participant sudah terdaftar
     const existingParticipant = await prisma.participant.findFirst({
-      where: {
-        email,
-        eventId: Number(eventId),
-      },
+      where: { email, eventId: Number(eventId) },
     });
 
     if (existingParticipant) {
-      return NextResponse.json(
-        {
-          error: "Email ini sudah terdaftar di event ini",
-          participant: existingParticipant,
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email ini sudah terdaftar di event ini", participant: existingParticipant }, { status: 400 });
     }
 
-    // create participant baru
-    const participant = await prisma.participant.create({
-      data: {
-        fullName,
-        email,
-        birthDate: new Date(birthDate),
-        eventId: dbEvent.id,
-        ticketCode: randomUUID(),
-      },
-    });
+    // buat participant baru + update participantCount di event dalam transaksi
+    const [participant, updatedEvent] = await prisma.$transaction([
+      prisma.participant.create({
+        data: {
+          fullName,
+          email,
+          birthDate: new Date(birthDate),
+          eventId: dbEvent.id,
+          ticketCode: randomUUID(),
+        },
+      }),
+      prisma.event.update({
+        where: { id: dbEvent.id },
+        data: {
+          participantCount: { increment: 1 },
+        },
+      }),
+    ]);
 
-    return NextResponse.json({ participant });
+    return NextResponse.json({ participant, updatedEvent });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Gagal mendaftar" }, { status: 500 });

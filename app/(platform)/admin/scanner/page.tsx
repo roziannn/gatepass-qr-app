@@ -14,6 +14,7 @@ export default function ScanQRPage() {
   const [manualInput, setManualInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLoadingAnim, setShowLoadingAnim] = useState(false);
+  const [scanPaused, setScanPaused] = useState(false);
 
   type TicketData = {
     fullName: string;
@@ -61,14 +62,23 @@ export default function ScanQRPage() {
   };
 
   const handleScan = (res: Result | null, err: Error | null) => {
+    if (loading || scanPaused) return;
+
     if (res) {
-      let parsed = res.getText();
+      let parsed = res.getText().trim();
       try {
         const obj = JSON.parse(parsed);
-        if (obj.ticketId) parsed = obj.ticketId;
+        if (obj.ticketCode) parsed = obj.ticketCode.trim();
       } catch {}
+
       checkTicket(parsed);
+
+      setScanPaused(true);
+      setTimeout(() => {
+        setScanPaused(false);
+      }, 15000);
     }
+
     if (err) console.warn("QR decode error:", err);
   };
 
@@ -110,7 +120,7 @@ export default function ScanQRPage() {
           </div>
 
           {/* QR Scanner */}
-          {mode === "scan" && (
+          {mode === "scan" && !scanPaused && (
             <div className="relative w-96 aspect-square rounded-2xl overflow-hidden border-2 border-green-400 shadow-inner">
               <QrReader constraints={{ video: { facingMode: "environment" } }} onResult={handleScan} videoStyle={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "white" }} />
               <div className="absolute inset-0 flex justify-center">
@@ -156,7 +166,6 @@ export default function ScanQRPage() {
                   <>
                     <InfoIcon className="w-12 h-12 text-red-600 mb-2" />
                     <p className="text-red-700 font-extrabold text-2xl mb-2">Sudah Check-in</p>
-                    {/* <p className="text-slate-600 font-bold text-sm">Tiket sudah divalidasi sebelumnya</p> */}
                     {ticketData?.scanDate && (
                       <p className="text-slate-600 font-bold mt-1">
                         Ticket discan pada:{" "}

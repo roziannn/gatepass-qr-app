@@ -24,7 +24,7 @@ export default function Register() {
   useEffect(() => {
     async function fetchEvents() {
       try {
-        const res = await fetch("/api/events");
+        const res = await fetch("/api/events?status=active");
         const data = await res.json();
         setEvents(data || []);
       } catch (err) {
